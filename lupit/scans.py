@@ -82,7 +82,7 @@ def scan(positioners = None, detectors = None,
     # set a number of breakpoints equal to the number of steps in the scan
     s.breakpoints = range(n)
 
-    def scan_callback(loop_idx):
+    def scan_callback(breakpoint):
         """ Callback that gets executed at the end of each loop
 
         Parameters
@@ -90,7 +90,7 @@ def scan(positioners = None, detectors = None,
         loop_idx : int
 
         """
-        print('scan callback: {}'.format(loop_idx))
+        print('scan callback: {}'.format(breakpoint))
 
     # register a breakpoint function with the stepscan
     s.at_break_methods = [scan_callback,]
