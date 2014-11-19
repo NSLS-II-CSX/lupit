@@ -8,16 +8,17 @@ __pycache__/
 # Distribution / packaging
 .Python
 env/
+bin/
 build/
 develop-eggs/
 dist/
-downloads/
 eggs/
 lib/
 lib64/
 parts/
 sdist/
 var/
+.idea/
 *.egg-info/
 .installed.cfg
 *.egg
@@ -44,11 +45,27 @@ coverage.xml
 *.mo
 *.pot
 
+# Mr Developer
+.mr.developer.cfg
+.project
+.pydevproject
+
+# Rope
+.ropeproject
+
 # Django stuff:
 *.log
+*.pot
 
 # Sphinx documentation
 docs/_build/
+
+# Anaconda?
+*.cfg
+
+# Enaml
+__enamlcache__/
+
 
 # PyBuilder
 target/
