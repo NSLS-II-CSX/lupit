@@ -161,8 +161,8 @@ def scan(positioners=None, detectors=None,
             exception = False
         except Exception as e:
             # raised when the header hasn't yet been created
-            print('Waiting for run header to be created. Trying again in 500 ms')
             print("Exception: {}".format(e))
+            print('Waiting for run header to be created. Trying again in 500 ms')
             time.sleep(0.5)
     # write the run header and event descriptor to the PV
     broker_commands.create_event_descriptor(ev_desc)
