@@ -99,8 +99,8 @@ def scan(positioners=None, detectors=None,
     # create some local methods
 
     def get_detector_data(detector):
-        print('detector: {}'.format(detector))
-        print('counters:')
+        # print('detector: {}'.format(detector))
+        # print('counters:')
         data_dict = {}
         for counter in detector.counters:
             for name, val in six.iteritems(counter.get_buffers()):
@@ -108,14 +108,14 @@ def scan(positioners=None, detectors=None,
                     val = val[-1]
                 data_dict[name] = val
                 # print('\t{}, {}'.format(name, val))
-        print('data_dict: {}'.format(data_dict))
+        # print('data_dict: {}'.format(data_dict))
         return data_dict
         # return {name: val[-1] for counter in detector.counters
         #         for name,val in six.iteritems(counter.get_buffers())}
 
     def get_positioner_data(positioner):
         positioner_info = {positioner.pv.pvname: positioner.pv.get()}
-        print('positioner_info: {}'.format(positioner_info))
+        # print('positioner_info: {}'.format(positioner_info))
         return positioner_info
 
     def get_data_dict():
@@ -146,7 +146,7 @@ def scan(positioners=None, detectors=None,
             # raised when the scan_id already exists
             print("Trying to find a valid scan_id: {}".format(scan_id))
             scan_id += 1
-
+    print('SCAN ID: {}'.format(scan_id))
     broker_commands.create_header(header)
     print("Header created successfully: {}".format(header))
     # create the event descriptor
