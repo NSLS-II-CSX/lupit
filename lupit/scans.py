@@ -8,7 +8,7 @@ import platform
 import keyring
 import pyOlog
 import six
-from dummyBroker import broker_commands
+from databroker.api import data_collection
 
 def frange(start,end=None,inc=None,p=None):
     if end == None:
@@ -137,14 +137,14 @@ def scan(positioners=None, detectors=None,
     #                      password = keyring.get_password('olog',username))
 
     # create the run header
-    header = broker_commands.create_run_header(scan_id=scan_id)
+    header = data_collection.create_run_header(scan_id=scan_id)
     # create the event descriptor
     keys = get_data_dict()
-    event_descriptor = broker_commands.create_event_descriptor(
+    event_descriptor = data_collection.create_event_descriptor(
         run_header=header, event_type_id=1, data_keys=keys,
         descriptor_name=scan_description)
     # write the header and event_descriptor to the header PV
-    broker_commands.write_to_hdr_PV(header, event_descriptor)
+    data_collection.write_to_hdr_PV(header, event_descriptor)
     # create the pyepics step scan object
     s = StepScan()
 
@@ -170,10 +170,10 @@ def scan(positioners=None, detectors=None,
         print('all scan information: {}'.format(scan_data))
         # caget the detectors
         print('scan callback: {}'.format(breakpoint))
-        event = broker_commands.format_event(header, event_descriptor,
+        event = data_collection.format_event(header, event_descriptor,
                                               seq_no=breakpoint,
                                               data=scan_data)
-        broker_commands.write_to_event_PV(event)
+        data_collection.write_to_event_PV(event)
 
     # register a breakpoint function with the stepscan
     s.at_break_methods = [scan_callback,]
