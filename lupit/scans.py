@@ -137,35 +137,14 @@ def scan(positioners=None, detectors=None,
     #                      password = keyring.get_password('olog',username))
 
     # create the run header
-    exception = True
-    while exception:
-        try:
-            header = broker_commands.compose_header(scan_id=scan_id)
-            exception = False
-        except ValueError:
-            # raised when the scan_id already exists
-            print("Trying to find a valid scan_id: {}".format(scan_id))
-            scan_id += 1
-    print('SCAN ID: {}'.format(scan_id))
-    broker_commands.create_header(header)
-    print("Header created successfully: {}".format(header))
+    header = broker_commands.create_run_header(scan_id=scan_id)
     # create the event descriptor
     keys = get_data_dict()
-
-    exception = True
-    while exception:
-        try:
-            ev_desc = broker_commands.compose_event_descriptor(
-                header, event_type_id=1, descriptor_name=scan_description,
-                data_keys=list(six.iterkeys(keys)))
-            exception = False
-        except Exception as e:
-            # raised when the header hasn't yet been created
-            print("Exception: {}".format(e))
-            print('Waiting for run header to be created. Trying again in 500 ms')
-            time.sleep(0.5)
-    # write the run header and event descriptor to the PV
-    broker_commands.create_event_descriptor(ev_desc)
+    event_descriptor = broker_commands.create_event_descriptor(
+        run_header=header, event_type_id=1, data_keys=keys,
+        descriptor_name=scan_description)
+    # write the header and event_descriptor to the header PV
+    broker_commands.write_to_hdr_PV(header, event_descriptor)
     # create the pyepics step scan object
     s = StepScan()
 
