@@ -3,7 +3,7 @@ __author__ = 'edill'
 from lupit import scans
 from lupit.ipy import *
 
-positioners = slt3x
+positioners = diag4y
 
 detectors = [sclr]
 

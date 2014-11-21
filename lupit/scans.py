@@ -99,7 +99,7 @@ def scan(positioners=None, detectors=None,
     # create some local methods
 
     def get_detector_data(detector):
-        # print('detector: {}'.format(detector))
+        print('detector: {}'.format(detector))
         # print('counters:')
         data_dict = {}
         for counter in detector.counters:
@@ -170,10 +170,10 @@ def scan(positioners=None, detectors=None,
         print('all scan information: {}'.format(scan_data))
         # caget the detectors
         print('scan callback: {}'.format(breakpoint))
-        event = broker_commands.compose_event(header, ev_desc,
+        event = broker_commands.format_event(header, event_descriptor,
                                               seq_no=breakpoint,
                                               data=scan_data)
-        broker_commands.create_event(event)
+        broker_commands.write_to_event_PV(event)
 
     # register a breakpoint function with the stepscan
     s.at_break_methods = [scan_callback,]
