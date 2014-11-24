@@ -45,11 +45,29 @@ def get_unique_filename():
     filename = '/epics/xf/23id/data/{0}.dat'.format(h.hexdigest())
     return filename
 
+def listify(perhaps_a_list):
+    """ Test if `perhaps_a_list` is a list and, if not, make it one
 
-def scan(positioners=None, detectors=None,
-         start=None, stop=None, step=1,
-         dwelltime=None, scan_id=None,
-         scan_description=None):
+    perhaps_a_list is None: return []
+    perhaps_a_list is not iterable: return [perhaps_a_list, ]
+    perhaps_a_list is iterable: return perhaps_a_list
+
+    Returns
+    -------
+    definitely_a_list : list
+
+    """
+    try:
+        iter(perhaps_a_list)
+    except TypeError:
+        if perhaps_a_list is None:
+            return []
+        return [perhaps_a_list, ]
+    return perhaps_a_list
+
+def scan(positioners, start, stop, step, dwelltime,
+         detectors=None, other_pvs=None,
+         scan_id=None, scan_description=None, callback=None):
     """Scan macro
 
     positioners are a list of positioners to scan.
@@ -59,40 +77,58 @@ def scan(positioners=None, detectors=None,
     ----------
     positioners : list
         List of pyepics positioners to scan
-    detectors : list
-        List of
+    start : float, list
+        Position at which to start the scan
+    stop : float, list
+        Position at which to stop the scan
+    step : int
+        Number of steps for the scan. Note that the actual number of steps in
+        the scan is (step+1), as the scan goes from start to (inclusive) stop
+    dwelltime : float
+        Time in seconds to wait at each position
+    detectors : list, optional
+        List of detectors to trigger at each step of the scan
+    other_pvs : list, optional
+        List of other `pyepics.PV` objects whose information should be
+        captured at each step, but are not directly controlled by this
+        stepscan. This information will be captured with a call to pv.get()
+    scan_id : int, optional
+        Some identifier of the scan_id. Note: must be unique. The creation of
+        the run header will incrementally search for an available scan_id
+    scan_description : str, optional
+        Textual description of the scan. This gets appended to the
+        event_descriptor
+    callback : callable, optional
+
+        Function that gets called at each step of the stepscan.
+        function sig:
+
+            callback(breakpoint, positioners, detectors=None,
+                     other_PVs=None)
+            '''
+            Parameters
+            ----------
+            breakpoint : int
+                Index of the stepscan (0 -> num_steps-1)
+            See `scan` docstring for) the description of the other PVs
     """
     # set some defaults
     if scan_id is None:
         scan_id = 1
-    if dwelltime is None:
-        dwelltime = 1
     if scan_description is None:
-        scan_description = "scan"
+        scan_description = "stepscan"
+
+    # ensure things that are supposed to be lists are, in fact, lists
+    other_pvs = listify(other_pvs)
+    detectors = listify(detectors)
+    positioners = listify(positioners)
+    start = listify(start)
+    stop = listify(stop)
+    callback = listify(callback)
 
     attributes = {}
-
-    # convert input into lists
-    try:
-        iter(positioners)
-    except TypeError:
-        # raised if positioners is not iterable
-        positioners = [positioners,]
-    try:
-        iter(detectors)
-    except TypeError:
-        # raised if detectors is not iterable
-        detectors = [detectors,]
-    try:
-        iter(start)
-    except TypeError:
-        # raised if start is not iterable
-        start = [start,]
-    try:
-        iter(stop)
-    except TypeError:
-        # raised if stop is not iterable
-        stop = [stop,]
+    # make sure that start stop and step are all the same length. raise
+    # an exception if not
 
     # Now create the log entry for the olog
 
@@ -129,6 +165,8 @@ def scan(positioners=None, detectors=None,
                 detector.trigger.start()
                 time.sleep(1)
                 data_dict.update(get_detector_data(detector))
+        for pv in other_pvs:
+            data_dict.update(get_positioner_data(pv))
         return data_dict
 
     #username = os.getlogin()
@@ -139,7 +177,8 @@ def scan(positioners=None, detectors=None,
     # create the run header
     header = data_collection.create_run_header(scan_id=scan_id)
     # create the event descriptor
-    keys = get_data_dict()
+    keys = list(six.iterkeys(get_data_dict()))
+    keys.append('time')
     event_descriptor = data_collection.create_event_descriptor(
         run_header=header, event_type_id=1, data_keys=keys,
         descriptor_name=scan_description)
@@ -170,10 +209,13 @@ def scan(positioners=None, detectors=None,
         print('all scan information: {}'.format(scan_data))
         # caget the detectors
         print('scan callback: {}'.format(breakpoint))
+        scan_data.update({'time': time.time()})
         event = data_collection.format_event(header, event_descriptor,
                                               seq_no=breakpoint,
                                               data=scan_data)
         data_collection.write_to_event_PV(event)
+        for cb in callback:
+            cb(breakpoint, positioners, detectors, other_pvs)
 
     # register a breakpoint function with the stepscan
     s.at_break_methods = [scan_callback,]
